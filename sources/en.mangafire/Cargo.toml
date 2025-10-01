@@ -1,0 +1,16 @@
+[package]
+name = "en-mangafire"
+version = "0.1.0"
+edition = "2021"
+description = "Aidoku extension for mangafire.to"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+aidoku = "*"
+reqwest = { version = "0.11", features = ["json"] }
+select = "0.5"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+url = "2.2"
