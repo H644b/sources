@@ -22,6 +22,13 @@ impl Source for MangafireSource {
 		}
 		for filter in filters {
 			match filter {
+				FilterValue::Sort { id, index, .. } => {
+					// Map sort index to sort value based on filters.json
+					let sort_values = ["recently_updated", "recently_added", "name_az", "release_date", "most_viewed", "score"];
+					if let Some(sort_value) = sort_values.get(index as usize) {
+						url.push_str(&format!("&{}={}", id, sort_value));
+					}
+				},
 				FilterValue::Select { id, value } => {
 					if !value.is_empty() {
 						url.push_str(&format!("&{}={}", id, value));
@@ -117,12 +124,24 @@ impl Source for MangafireSource {
 		let url = format!("{}/read/{}/{}", BASE_URL, manga.key, chapter.key);
 		let html = Request::get(&url)?.html()?;
 		let mut pages = Vec::new();
-		for img in html.select(".reader img").map(|els| els.filter_map(|el| el.attr("src")).collect::<Vec<String>>()).unwrap_or_default() {
-			pages.push(Page {
-				content: PageContent::url(img.to_string()),
-				..Default::default()
-			});
+		
+		// Try to get images from the reader
+		if let Some(imgs) = html.select(".reader img") {
+			for el in imgs {
+				// Try data-src first (for lazy-loaded images), then src
+				let img_url = el.attr("data-src")
+					.or_else(|| el.attr("src"))
+					.map(|s| s.to_string());
+				
+				if let Some(img) = img_url {
+					pages.push(Page {
+						content: PageContent::url(img),
+						..Default::default()
+					});
+				}
+			}
 		}
+		
 		Ok(pages)
 	}
 }
