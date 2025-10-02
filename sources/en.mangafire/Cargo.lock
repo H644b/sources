@@ -17,18 +17,16 @@ dependencies = [
 [[package]]
 name = "aidoku"
 version = "0.3.0"
-source = "git+https://github.com/Aidoku/aidoku-rs.git#79e396c96d9b6beafe2b19d2aaf28be12f99ce8d"
+source = "git+https://github.com/Aidoku/aidoku-rs.git#d922d82068d18b0c115a2185a86cbc3e849e739b"
 dependencies = [
+ "chrono",
  "euclid",
  "hashbrown",
- "itoa",
  "num-traits",
- "paste",
  "postcard",
  "serde",
  "serde_json",
  "talc",
- "thiserror",
 ]
 
 [[package]]
@@ -194,12 +192,6 @@ name = "once_cell"
 version = "1.21.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "42f5e15c9953c5e4ccceeb2e7382a716482c34515315f7b03532b8b4e8393d2d"
-
-[[package]]
-name = "paste"
-version = "1.0.15"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "57c0d7b74b563b49d38dae00a0c37d4d6de9b432382b2892f0574ddcae73fd0a"
 
 [[package]]
 name = "postcard"
