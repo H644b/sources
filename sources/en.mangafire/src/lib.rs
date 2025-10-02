@@ -122,25 +122,128 @@ impl Source for MangafireSource {
 
 	fn get_page_list(&self, manga: Manga, chapter: Chapter) -> Result<Vec<Page>> {
 		let url = format!("{}/read/{}/{}", BASE_URL, manga.key, chapter.key);
-		let html = Request::get(&url)?.html()?;
-		let mut pages = Vec::new();
+		let html = Request::get(&url)?
+			.header("Referer", &format!("{}/", BASE_URL))
+			.html()?;
 		
-		// Try to get images from the reader
-		if let Some(imgs) = html.select(".reader img") {
-			for el in imgs {
-				// Try data-src first (for lazy-loaded images), then src
-				let img_url = el.attr("data-src")
-					.or_else(|| el.attr("src"))
-					.map(|s| s.to_string());
-				
-				if let Some(img) = img_url {
-					pages.push(Page {
-						content: PageContent::url(img),
+		// Helper function to extract JavaScript array values
+		fn extract_js_array(content: &str, var_name: &str) -> Vec<String> {
+			// Look for patterns like: var_name = [...] or var_name=[...]
+			let patterns = [
+				format!("{} = [", var_name),
+				format!("{}=[", var_name),
+				format!("{} =[", var_name),
+				format!("{}= [", var_name),
+			];
+			
+			for pattern in &patterns {
+				if let Some(start_idx) = content.find(pattern) {
+					let after_start = &content[start_idx + pattern.len()..];
+					if let Some(end_idx) = after_start.find(']') {
+						let slice = &after_start[..end_idx];
+						return slice
+							.split(',')
+							.filter_map(|s| {
+								let trimmed = s.trim();
+								// Remove quotes and clean up
+								if trimmed.len() >= 2 {
+									let bytes = trimmed.as_bytes();
+									if (bytes[0] == b'"' && bytes[trimmed.len() - 1] == b'"') ||
+									   (bytes[0] == b'\'' && bytes[trimmed.len() - 1] == b'\'') {
+										let unquoted = &trimmed[1..trimmed.len() - 1];
+										return Some(unquoted.replace("\\/", "/"));
+									}
+								}
+								if !trimmed.is_empty() {
+									Some(trimmed.replace("\\/", "/"))
+								} else {
+									None
+								}
+							})
+							.collect();
+					}
+				}
+			}
+			Vec::new()
+		}
+		
+		// Try to extract images from JavaScript first
+		let script_content = html
+			.select("script")
+			.map(|els| {
+				els.filter_map(|e| e.data())
+					.collect::<Vec<_>>()
+					.join("\n")
+			})
+			.unwrap_or_default();
+		
+		if !script_content.is_empty() {
+			// Try common variable names used by manga sites
+			let image_urls = extract_js_array(&script_content, "images");
+			if !image_urls.is_empty() {
+				return Ok(image_urls
+					.iter()
+					.map(|url| Page {
+						content: PageContent::url(url.clone()),
 						..Default::default()
-					});
+					})
+					.collect());
+			}
+			
+			// Try alternative variable names
+			let image_urls = extract_js_array(&script_content, "pageImages");
+			if !image_urls.is_empty() {
+				return Ok(image_urls
+					.iter()
+					.map(|url| Page {
+						content: PageContent::url(url.clone()),
+						..Default::default()
+					})
+					.collect());
+			}
+			
+			// Try chapterImages pattern
+			let image_urls = extract_js_array(&script_content, "chapterImages");
+			if !image_urls.is_empty() {
+				// Check if we need a CDN prefix
+				let cdn_urls = extract_js_array(&script_content, "cdns");
+				if let Some(cdn) = cdn_urls.first() {
+					return Ok(image_urls
+						.iter()
+						.map(|path| Page {
+							content: PageContent::url(format!("{}/{}", cdn, path)),
+							..Default::default()
+						})
+						.collect());
+				} else {
+					return Ok(image_urls
+						.iter()
+						.map(|url| Page {
+							content: PageContent::url(url.clone()),
+							..Default::default()
+						})
+						.collect());
 				}
 			}
 		}
+		
+		// Fallback: Try to get images from the reader HTML
+		let pages = html
+			.select(".reader img, #reader img, .read-content img")
+			.map(|els| {
+				els.filter_map(|el| {
+					// Try data-src first (for lazy-loaded images), then src
+					let img_url = el.attr("data-src")
+						.or_else(|| el.attr("src"))
+						.or_else(|| el.attr("data-url"))?;
+					Some(Page {
+						content: PageContent::url(img_url.to_string()),
+						..Default::default()
+					})
+				})
+				.collect()
+			})
+			.unwrap_or_default();
 		
 		Ok(pages)
 	}
