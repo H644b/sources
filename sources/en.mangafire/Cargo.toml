@@ -8,9 +8,5 @@ description = "Aidoku extension for mangafire.to"
 crate-type = ["cdylib"]
 
 [dependencies]
-aidoku = "*"
-reqwest = { version = "0.11", features = ["json"] }
-select = "0.5"
-serde = { version = "1.0", features = ["derive"] }
-serde_json = "1.0"
-url = "2.2"
+aidoku = { git = "https://github.com/Aidoku/aidoku-rs.git", version = "0.3.0", features = ["json"] }
+chrono = { version = "0.4.30", default-features = false, features = ["alloc"] }

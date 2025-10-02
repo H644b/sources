@@ -1,9 +1,10 @@
 {
-	"name": "MangaFire",
-	"id": "en.mangafire",
-	"lang": "en",
-	"version": 1,
-	"author": "YourName",
-	"website": "https://mangafire.to",
-	"description": "MangaFire (mangafire.to) source for Aidoku."
+	"info": {
+		"id": "en.mangafire",
+		"name": "MangaFire",
+		"version": 1,
+		"url": "https://mangafire.to",
+		"contentRating": 0,
+		"languages": ["en"]
+	}
 }
