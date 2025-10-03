@@ -57,7 +57,10 @@ impl Source for MangafireSource {
 				_ => {}
 			}
 		}
-		let html = Request::get(&url)?.html()?;
+		let html = Request::get(&url)?
+			.header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
+			.header("Referer", BASE_URL)
+			.html()?;
 		let entries = html
 			.select(".unit")
 			.map(|els| {
@@ -96,7 +99,10 @@ impl Source for MangafireSource {
 		needs_chapters: bool,
 	) -> Result<Manga> {
 		let url = format!("{}/manga/{}", BASE_URL, manga.key);
-		let html = Request::get(&url)?.html()?;
+		let html = Request::get(&url)?
+			.header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
+			.header("Referer", BASE_URL)
+			.html()?;
 		if needs_details {
 			manga.title = html
 				.select_first(".info h1")
@@ -179,7 +185,8 @@ impl Source for MangafireSource {
 	fn get_page_list(&self, manga: Manga, chapter: Chapter) -> Result<Vec<Page>> {
 		let url = format!("{}/read/{}/{}", BASE_URL, manga.key, chapter.key);
 		let html = Request::get(&url)?
-			.header("Referer", &format!("{}/", BASE_URL))
+			.header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
+			.header("Referer", &format!("{}/manga/{}", BASE_URL, manga.key))
 			.html()?;
 
 		// Helper function to extract JavaScript array values
