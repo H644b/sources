@@ -9,11 +9,13 @@ This is an Aidoku extension for the English manga site [mangafire.to](https://ma
 - Get pages for a chapter (supports JavaScript-based and HTML-based image loading)
 
 ## Implementation Notes
+- All HTTP requests include proper headers (User-Agent, Referer) to ensure compatibility with the website
 - The `get_page_list` function extracts chapter images from both JavaScript variables and HTML elements
 - Supports common variable names: `images`, `pageImages`, `chapterImages`
 - Handles CDN URLs when present (e.g., `cdns` array)
 - Falls back to HTML parsing if JavaScript extraction fails
 - Properly handles lazy-loaded images with `data-src` attributes
+- Referer header is set appropriately for each request type to match browser behavior
 
 ## License
 MIT/Apache-2.0
